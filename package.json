@@ -1,0 +1,35 @@
+{
+  "name": "ascii-fix",
+  "version": "1.0.0",
+  "description": "Fix broken ASCII art tables, boxes, and diagrams. Fixes alignment, padding, corners, and style consistency.",
+  "main": "src/index.js",
+  "bin": {
+    "ascii-fix": "bin/cli.js"
+  },
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
+  "keywords": [
+    "ascii",
+    "ascii-art",
+    "table",
+    "box-drawing",
+    "alignment",
+    "fix",
+    "cli",
+    "terminal",
+    "unicode",
+    "cursor",
+    "ai"
+  ],
+  "author": "Lubu",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/L-ubu/ascii-fix"
+  },
+  "engines": {
+    "node": ">=18.3.0"
+  }
+}
