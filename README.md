@@ -15,26 +15,7 @@
 
 AI models love generating ASCII tables and boxes but consistently mess up column alignment, padding, corners, and widths. **ascii-fix** auto-detects and corrects all of it. Zero dependencies.
 
-## AI Skill (primary use)
-
-The main purpose of ascii-fix is as an **AI skill** — a set of rules and a tool that AI assistants (Cursor, Claude Code, etc.) use to validate and fix ASCII art they generate.
-
-### Install the Cursor skill
-
-Copy `cursor-skill/SKILL.md` into your project:
-
-```bash
-mkdir -p .cursor/skills/ascii-fix
-cp cursor-skill/SKILL.md .cursor/skills/ascii-fix/SKILL.md
-```
-
-Once installed, the AI assistant will:
-- **Proactively validate** ASCII art before outputting it
-- **Auto-fix** broken ASCII art when you paste it
-- **Apply consistent style** across all generated diagrams
-- **Know the fix rules** even without the CLI installed
-
-The skill works standalone — it teaches the AI how to fix ASCII art manually. When the CLI is also installed, the AI can pipe content through it for automated fixing.
+> **Want AI rules instead of a tool?** See [ascii-fix-rules](https://github.com/L-ubu/ascii-fix-rules) — install with `npx ascii-fix-rules init` to teach your AI assistant to generate correct ASCII art without needing this tool.
 
 ## Before / After
 
