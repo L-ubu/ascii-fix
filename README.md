@@ -1,12 +1,12 @@
 # ascii-fix
 
 ```
-╔═══════════════════════════════════════╗
-║              ascii-fix                ║
-║                                       ║
-║   Fix broken ASCII art tables,        ║
-║   boxes, and diagrams — instantly.    ║
-╚═══════════════════════════════════════╝
++---------------------------------------+
+|              ascii-fix                |
+|                                       |
+|   Fix broken ASCII art tables,        |
+|   boxes, and diagrams -- instantly.   |
++---------------------------------------+
 ```
 
 [![npm version](https://img.shields.io/npm/v/ascii-fix)](https://www.npmjs.com/package/ascii-fix)
@@ -22,23 +22,23 @@ AI models love generating ASCII tables and boxes but consistently mess up column
 ```
 BEFORE (AI-generated mess):              AFTER (ascii-fix):
 
-╔══════════════════════════╗             ╔════════════════════════════╗
-║  SLIMESHELL v0.5.0       ║             ║  SLIMESHELL v0.5.0        ║
-╠══════════════════════════╣             ╠════════════════════════════╣
-║  73 files · 52k lines  ║             ║  73 files · 52k lines     ║
-║  45 pages              ║             ║  45 pages                  ║
-╚══════════════════════════╝             ╚════════════════════════════╝
++----------------------------+           +----------------------------+
+|  SLIMESHELL v0.5.0         |           |  SLIMESHELL v0.5.0         |
++----------------------------+           +----------------------------+
+|  73 files . 52k lines  |              |  73 files . 52k lines      |
+|  45 pages              |              |  45 pages                   |
++----------------------------+           +----------------------------+
 ```
 
 ```
 BEFORE:                                  AFTER:
 
-┌───────┬───┬──────────┐                ┌───────┬─────┬──────────┐
-│ Name  │ Age │ City     │                │ Name  │ Age │ City     │
-├───────┼───┼──────────┤                ├───────┼─────┼──────────┤
-│ Alice │ 30 │ New York │                │ Alice │ 30  │ New York │
-│ Bob │ 25 │ LA │                       │ Bob   │ 25  │ LA       │
-└───────┴───┴──────────┘                └───────┴─────┴──────────┘
++-------+-----+----------+              +-------+-----+----------+
+| Name  | Age | City     |              | Name  | Age | City     |
++-------+-----+----------+              +-------+-----+----------+
+| Alice | 30 | New York |               | Alice | 30  | New York |
+| Bob | 25 | LA |                       | Bob   | 25  | LA       |
++-------+-----+----------+              +-------+-----+----------+
 ```
 
 ## CLI Tool
@@ -107,14 +107,14 @@ const rounded = convert(heavyBox, 'rounded');
 
 ## Supported Styles
 
-```
-Unicode Heavy          Unicode Light          Plain ASCII            Rounded
-╔══════════════╗       ┌──────────────┐       +----------------+     ╭──────────────╮
-║  Content     ║       │  Content     │       |  Content       |     │  Content     │
-╠══════════════╣       ├──────────────┤       +----------------+     ├──────────────┤
-║  More stuff  ║       │  More stuff  │       |  More stuff    |     │  More stuff  │
-╚══════════════╝       └──────────────┘       +----------------+     ╰──────────────╯
-```
+| Style | Characters |
+|-------|-----------|
+| Unicode Heavy | `+` `=` `\|` corners: top `+` bottom `+` |
+| Unicode Light | `+` `-` `\|` corners: top `+` bottom `+` |
+| Plain ASCII | `+` `-` `\|` |
+| Rounded | `+` `-` `\|` rounded corners |
+
+The tool supports 4 box-drawing character sets: **unicode-heavy** (`╔═╗║`), **unicode-light** (`┌─┐│`), **plain ASCII** (`+-|`), and **rounded** (`╭─╮│`). Use `--style` to convert between them.
 
 ## How It Works
 
