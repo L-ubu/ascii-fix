@@ -33,8 +33,10 @@ export function fixTable(text, options = {}) {
   // Extract region lines
   const regionLines = lines.slice(startLine, endLine + 1);
 
-  // Classify each line
-  const classified = regionLines.map((line) => classifyTableLine(line));
+  // Classify each line and resolve ambiguous ASCII borders
+  const classified = resolveAmbiguousTableBorders(
+    regionLines.map((line) => classifyTableLine(line)),
+  );
 
   // Parse content rows into cells
   const contentRows = [];
@@ -115,12 +117,17 @@ function classifyTableLine(line) {
     const chars = [...trimmed];
     const lastChar = chars[chars.length - 1];
 
-    // Check for corner characters
+    // Check for corner characters (non-ASCII styles have unambiguous corners)
     const isTopBorder = isCornerType(firstChar, 'topLeft') || isCornerType(firstChar, 'teeTop');
     const isBottomBorder = isCornerType(firstChar, 'bottomLeft') || isCornerType(firstChar, 'teeBottom');
+    const isTeeLeft = isCornerType(firstChar, 'teeLeft');
 
     if (isTopBorder && !isBottomBorder) return { type: 'border-top', line: trimmed };
-    if (isBottomBorder) return { type: 'border-bottom', line: trimmed };
+    if (isBottomBorder && !isTopBorder) return { type: 'border-bottom', line: trimmed };
+    if (isTeeLeft && !isTopBorder && !isBottomBorder) return { type: 'separator', line: trimmed };
+
+    // ASCII ambiguous — resolve by position later
+    if (firstChar === '+') return { type: 'border-or-sep', line: trimmed };
     return { type: 'separator', line: trimmed };
   }
 
@@ -129,8 +136,32 @@ function classifyTableLine(line) {
   return { type: 'other', line };
 }
 
+/**
+ * Resolve ambiguous ASCII table borders by position.
+ * First border-or-sep → border-top, last → border-bottom, rest → separator.
+ */
+function resolveAmbiguousTableBorders(classified) {
+  const ambiguousIndices = [];
+  for (let i = 0; i < classified.length; i++) {
+    if (classified[i].type === 'border-or-sep') {
+      ambiguousIndices.push(i);
+    }
+  }
+
+  if (ambiguousIndices.length === 0) return classified;
+
+  for (let j = 0; j < ambiguousIndices.length; j++) {
+    const i = ambiguousIndices[j];
+    if (j === 0) classified[i].type = 'border-top';
+    else if (j === ambiguousIndices.length - 1) classified[i].type = 'border-bottom';
+    else classified[i].type = 'separator';
+  }
+
+  return classified;
+}
+
 function isCornerType(char, role) {
-  if (char === '+') return true; // ASCII ambiguous
+  if (char === '+') return false; // ASCII ambiguous — handled by resolveAmbiguousTableBorders
   for (const [, charset] of Object.entries(CHARSETS)) {
     if (charset[role] === char) return true;
   }

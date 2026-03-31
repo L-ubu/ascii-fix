@@ -132,12 +132,56 @@ export function mapChar(char, targetStyle) {
 /**
  * Detect which style a set of characters most likely belongs to.
  * Returns { style, confidence } where confidence is 0-1.
+ *
+ * Uses "exclusive character" detection: a char is exclusive to a style
+ * if it appears in that style but not in any other non-ascii style.
+ * If exclusive chars from multiple styles are found, it's mixed.
  */
 export function detectStyle(chars) {
   if (!chars || chars.length === 0) return { style: null, confidence: 0 };
 
+  // Check if only ASCII box chars are used
+  const hasNonAsciiBoxChars = chars.some((c) => {
+    const entries = _charMap.get(c);
+    if (!entries) return false;
+    return entries.some((e) => e.style !== 'ascii');
+  });
+
+  if (!hasNonAsciiBoxChars && chars.length > 0) {
+    return { style: 'ascii', confidence: 1 };
+  }
+
+  // Find which non-ascii styles have exclusive characters present
+  // A character is "exclusive" to style S if it does NOT appear in any other non-ascii style
+  const nonAsciiStyles = ['unicode-heavy', 'unicode-light', 'rounded'];
+  const stylesWithExclusiveChars = new Set();
+
+  for (const char of chars) {
+    const entries = _charMap.get(char);
+    if (!entries) continue;
+
+    const nonAsciiEntries = entries.filter((e) => e.style !== 'ascii');
+    if (nonAsciiEntries.length === 1) {
+      // This char is exclusive to one non-ascii style
+      stylesWithExclusiveChars.add(nonAsciiEntries[0].style);
+    }
+  }
+
+  // If exclusive chars from multiple styles → mixed
+  if (stylesWithExclusiveChars.size > 1) {
+    return { style: 'mixed', confidence: 0.5 };
+  }
+
+  // If exactly one style has exclusive chars → that's the style
+  if (stylesWithExclusiveChars.size === 1) {
+    const style = [...stylesWithExclusiveChars][0];
+    return { style, confidence: 1 };
+  }
+
+  // No exclusive chars found — fall back to frequency counting
+  // (e.g., only shared chars like ─ │ ├ ┤ ┼ which are in light+rounded)
   const styleCounts = {};
-  for (const style of Object.keys(CHARSETS)) {
+  for (const style of nonAsciiStyles) {
     styleCounts[style] = 0;
   }
 
@@ -147,11 +191,9 @@ export function detectStyle(chars) {
     if (!entries) continue;
     total++;
     for (const { style } of entries) {
-      styleCounts[style]++;
+      if (style !== 'ascii') styleCounts[style]++;
     }
   }
-
-  if (total === 0) return { style: null, confidence: 0 };
 
   let bestStyle = null;
   let bestCount = 0;
@@ -162,37 +204,6 @@ export function detectStyle(chars) {
     }
   }
 
-  // ASCII style is ambiguous (+ - | are shared with other styles via overlap)
-  // Only report ascii if ALL characters are ascii-exclusive
-  const hasNonAsciiBoxChars = chars.some((c) => {
-    const entries = _charMap.get(c);
-    if (!entries) return false;
-    return entries.some((e) => e.style !== 'ascii');
-  });
-
-  if (!hasNonAsciiBoxChars && total > 0) {
-    return { style: 'ascii', confidence: 1 };
-  }
-
-  // Filter out ascii from consideration if non-ascii box chars are present
-  if (hasNonAsciiBoxChars) {
-    delete styleCounts['ascii'];
-    bestStyle = null;
-    bestCount = 0;
-    for (const [style, count] of Object.entries(styleCounts)) {
-      if (count > bestCount) {
-        bestCount = count;
-        bestStyle = style;
-      }
-    }
-  }
-
-  const confidence = bestCount / total;
-
-  // Check for mixed: if top style doesn't cover >80% of chars
-  if (confidence < 0.8) {
-    return { style: 'mixed', confidence };
-  }
-
+  const confidence = total > 0 ? bestCount / total : 0;
   return { style: bestStyle, confidence };
 }

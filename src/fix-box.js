@@ -100,8 +100,9 @@ function classifyBoxLine(line) {
   if (nonSpaceCount > 0 && horizontalCount / nonSpaceCount > 0.5) {
     const firstChar = trimmed[0];
 
-    // Determine type by first character
-    for (const [, cs] of Object.entries(CHARSETS)) {
+    // Determine type by first character (skip ASCII — all corners are '+')
+    for (const [styleName, cs] of Object.entries(CHARSETS)) {
+      if (styleName === 'ascii') continue;
       if (firstChar === cs.topLeft) return { type: 'border-top', line: trimmed };
       if (firstChar === cs.bottomLeft) return { type: 'border-bottom', line: trimmed };
       if (firstChar === cs.teeLeft) return { type: 'separator', line: trimmed };
