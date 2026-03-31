@@ -13,7 +13,28 @@
 [![license](https://img.shields.io/npm/l/ascii-fix)](https://github.com/L-ubu/ascii-fix/blob/main/LICENSE)
 [![node](https://img.shields.io/node/v/ascii-fix)](https://nodejs.org)
 
-**Zero-dependency** tool that validates and auto-corrects broken ASCII art. AI models love generating ASCII tables and boxes but consistently mess up alignment, padding, corners, and widths. This tool fixes all of that.
+AI models love generating ASCII tables and boxes but consistently mess up column alignment, padding, corners, and widths. **ascii-fix** auto-detects and corrects all of it. Zero dependencies.
+
+## AI Skill (primary use)
+
+The main purpose of ascii-fix is as an **AI skill** — a set of rules and a tool that AI assistants (Cursor, Claude Code, etc.) use to validate and fix ASCII art they generate.
+
+### Install the Cursor skill
+
+Copy `cursor-skill/SKILL.md` into your project:
+
+```bash
+mkdir -p .cursor/skills/ascii-fix
+cp cursor-skill/SKILL.md .cursor/skills/ascii-fix/SKILL.md
+```
+
+Once installed, the AI assistant will:
+- **Proactively validate** ASCII art before outputting it
+- **Auto-fix** broken ASCII art when you paste it
+- **Apply consistent style** across all generated diagrams
+- **Know the fix rules** even without the CLI installed
+
+The skill works standalone — it teaches the AI how to fix ASCII art manually. When the CLI is also installed, the AI can pipe content through it for automated fixing.
 
 ## Before / After
 
@@ -39,20 +60,15 @@ BEFORE:                                  AFTER:
 └───────┴───┴──────────┘                └───────┴─────┴──────────┘
 ```
 
-## Installation
+## CLI Tool
 
 ```bash
-# Use directly with npx (no install)
+# Use directly with npx (no install needed)
 npx ascii-fix input.txt
 
 # Or install globally
 npm install -g ascii-fix
-
-# Or add to your project
-npm install ascii-fix
 ```
-
-## CLI Usage
 
 ```bash
 # Fix from stdin (pipe)
@@ -61,36 +77,32 @@ echo "broken table" | npx ascii-fix
 # Fix a file
 npx ascii-fix input.txt
 
-# Fix with style option
-npx ascii-fix --style unicode-heavy input.txt
-npx ascii-fix --style unicode-light input.txt
-npx ascii-fix --style ascii input.txt
-npx ascii-fix --style rounded input.txt
-
-# Convert between styles
+# Convert style
 cat box.txt | npx ascii-fix --style rounded
 
-# Only detect issues (no fix)
+# Detect issues only (exit code 1 if broken)
 npx ascii-fix --check input.txt
 
 # Fix and write back to file
 npx ascii-fix --write input.txt
 
-# Output as JSON (for programmatic use)
+# JSON output
 npx ascii-fix --json input.txt
 ```
 
-### Flags
-
 | Flag | Description |
 |------|-------------|
-| `--style <style>` | Target style: `unicode-heavy`, `unicode-light`, `ascii`, `rounded` |
-| `--check` | Detect issues only. Exit code 1 if issues found. |
+| `--style <s>` | Target style: `unicode-heavy`, `unicode-light`, `ascii`, `rounded` |
+| `--check` | Detect issues only. Exit 1 if issues found. |
 | `--write` | Fix and write back to file |
 | `--json` | Output as JSON |
 | `--help` | Show help |
 
 ## Library API
+
+```bash
+npm install ascii-fix
+```
 
 ```js
 import { fix, fixTable, fixBox, detect, convert } from 'ascii-fix';
@@ -105,8 +117,8 @@ const fixedTable = fixTable(brokenTable);
 const fixedBox = fixBox(brokenBox, { style: 'rounded' });
 
 // Detect issues without fixing
-const issues = detect(input);
-// Returns: { type: 'table'|'box'|'none', style, issues: [...], region }
+const result = detect(input);
+// → { type: 'table'|'box'|'none', style, issues: [...], region }
 
 // Convert between styles
 const rounded = convert(heavyBox, 'rounded');
@@ -115,55 +127,22 @@ const rounded = convert(heavyBox, 'rounded');
 ## Supported Styles
 
 ```
-Unicode Heavy (default for heavy input):
-╔══════════════╗
-║  Content     ║
-╠══════════════╣
-║  More stuff  ║
-╚══════════════╝
-
-Unicode Light:
-┌──────────────┐
-│  Content     │
-├──────────────┤
-│  More stuff  │
-└──────────────┘
-
-Plain ASCII:
-+----------------+
-|  Content       |
-+----------------+
-|  More stuff    |
-+----------------+
-
-Rounded:
-╭──────────────╮
-│  Content     │
-├──────────────┤
-│  More stuff  │
-╰──────────────╯
+Unicode Heavy          Unicode Light          Plain ASCII            Rounded
+╔══════════════╗       ┌──────────────┐       +----------------+     ╭──────────────╮
+║  Content     ║       │  Content     │       |  Content       |     │  Content     │
+╠══════════════╣       ├──────────────┤       +----------------+     ├──────────────┤
+║  More stuff  ║       │  More stuff  │       |  More stuff    |     │  More stuff  │
+╚══════════════╝       └──────────────┘       +----------------+     ╰──────────────╯
 ```
 
 ## How It Works
 
-1. **Detect** — Identifies ASCII art regions, classifies as table or box, detects the box-drawing style, and catalogs issues (misaligned columns, inconsistent widths, broken corners, mixed styles).
+1. **Detect** — Finds ASCII art regions, classifies as table or box, detects style, catalogs issues
+2. **Parse** — Extracts cell content (tables) or inner text (boxes), preserving content exactly
+3. **Calculate** — Computes column widths / max content width using Unicode-aware visual width (CJK & emoji = width 2)
+4. **Render** — Re-renders with proper alignment, padding, corners, and consistent style
 
-2. **Parse** — Extracts cell content from tables or inner content from boxes, preserving the actual text exactly.
-
-3. **Calculate** — Computes correct column widths for tables or maximum content width for boxes, using Unicode-aware visual width calculation (CJK and emoji characters count as width 2).
-
-4. **Render** — Re-renders the structure with proper alignment, padding, corners, and consistent style. The fixer is idempotent — running it twice gives the same result.
-
-## Cursor Skill
-
-Install the Cursor skill to fix ASCII art directly in your editor:
-
-1. Copy `cursor-skill/SKILL.md` to your project's `.cursor/skills/ascii-fix/SKILL.md`
-2. The AI assistant will automatically use it when you ask to fix ASCII art
-
-Or install the npm package and reference it in your skill.
-
-See [cursor-skill/SKILL.md](cursor-skill/SKILL.md) for details.
+The fixer is **idempotent** — running it twice gives the same result.
 
 ## Contributing
 
@@ -171,8 +150,7 @@ See [cursor-skill/SKILL.md](cursor-skill/SKILL.md) for details.
 2. Create your feature branch (`git checkout -b feature/amazing-feature`)
 3. Run tests: `npm test`
 4. Commit your changes
-5. Push to the branch
-6. Open a Pull Request
+5. Open a Pull Request
 
 ## License
 
